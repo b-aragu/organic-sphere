@@ -7,6 +7,10 @@ export default class Microphone {
         this.ready = false;
         this.volume = 0;
         this.levels = [];
+        this.silenceThreshold = 0.01;  // Volume level below which we consider as silence
+        this.silenceTimeoutDuration = 2000; // 2 seconds of silence to stop recognition
+        this.silenceTimeout = null;  // Timeout handle for silence detection
+        this.isWaitingForGroqResponse = false; 
 
         // Initialize speech recognition if available
         if ('webkitSpeechRecognition' in window) {
@@ -27,6 +31,7 @@ export default class Microphone {
                 }
                 this.displayText(transcript);  // Display the recognized text
                 this.lastTranscript = transcript;  // Store the last recognized transcript
+                this.resetSilenceTimeout();  // Reset the silence timer
             };
 
             // Event listener for errors during recognition
@@ -35,13 +40,15 @@ export default class Microphone {
             };
 
             // Event listener for when recognition ends
-            this.recognition.onend = () => {
+            this.recognition.onend = async () => {
                 console.log("Speech recognition ended.");
-                if (this.lastTranscript) {
-                    this.experience.llmCommunication.sendToGroq(this.lastTranscript); // Send recognized text to Groq when recognition ends
+                if (this.lastTranscript && !this.isWaitingForGroqResponse) {
+                    this.isWaitingForGroqResponse = true;
+                    await this.experience.llmCommunication.sendToGroq(this.lastTranscript);
+                    this.isWaitingForGroqResponse = false;
+                    this.recognition.start();
                 }
-                // Restart recognition after it ends
-                this.recognition.start();
+                
             };
 
             // Start speech recognition
@@ -63,7 +70,6 @@ export default class Microphone {
             });
     }
 
-
     init() {
         this.audioContext = new AudioContext();
 
@@ -78,6 +84,23 @@ export default class Microphone {
         this.byteFrequencyData = new Uint8Array(this.analyserNode.fftSize);
 
         this.ready = true;
+    }
+
+    resetSilenceTimeout() {
+        if (this.silenceTimeout) {
+            clearTimeout(this.silenceTimeout);  // Clear existing timeout
+        }
+        this.silenceTimeout = setTimeout(() => {
+            console.log("No speech detected for 2 seconds, stopping recognition.");
+            this.stopRecognition();
+        }, this.silenceTimeoutDuration);  // Set the timeout for silence detection
+    }
+
+    stopRecognition() {
+        if (this.recognition) {
+            this.recognition.stop();  // Stop recognition manually
+            console.log("Speech recognition manually stopped due to silence.");
+        }
     }
 
     setSpectrum() {
@@ -162,6 +185,11 @@ export default class Microphone {
         // Spectrum
         if (this.spectrum)
             this.spectrum.update();
+
+        // Check for silence and reset timeout if needed
+        if (this.volume < this.silenceThreshold) {
+            this.resetSilenceTimeout();
+        }
     }
 
     // Function to display recognized speech as text in the DOM
@@ -171,5 +199,4 @@ export default class Microphone {
             outputElement.textContent = `User Input: ${text}`;
         }
     }
-
 }

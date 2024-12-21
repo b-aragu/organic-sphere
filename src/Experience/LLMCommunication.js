@@ -2,7 +2,7 @@ const apiKey = "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";
 
 export default class LLMCommunication {
     constructor() {
-        this.apiUrl = 'https://search-window-1.onrender.com/api/groq';
+        this.apiUrl = 'https://api.groq.com/openai/v1/chat/completions';
     }
 
     async sendToGroq(speech) {
