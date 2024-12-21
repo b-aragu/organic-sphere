@@ -1,5 +1,3 @@
-require('dotenv').config();
-
 import * as THREE from 'three'
 import { Pane } from 'tweakpane'
 

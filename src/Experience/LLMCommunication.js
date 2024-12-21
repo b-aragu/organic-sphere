@@ -1,4 +1,4 @@
-const apiKey = process.env.GROQ_API_KEY;
+const apiKey = "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";
 
 export default class LLMCommunication {
     constructor() {
