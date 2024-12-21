@@ -1,3 +1,5 @@
+require('dotenv').config();
+
 import './style.css'
 import Experience from './Experience/Experience.js'
 

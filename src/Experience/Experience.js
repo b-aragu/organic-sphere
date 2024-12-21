@@ -1,3 +1,5 @@
+require('dotenv').config();
+
 import * as THREE from 'three'
 import { Pane } from 'tweakpane'
 
@@ -12,6 +14,8 @@ import World from './World.js'
 
 import assets from './assets.js'
 import Microphone from './Microphone.js'
+import LLMCommunication from './LLMCommunication.js'; 
+
 
 export default class Experience
 {
@@ -45,6 +49,7 @@ export default class Experience
         this.setResources()
         this.setMicrohopne()
         this.setWorld()
+        this.setLLMCommunication();
         
         this.sizes.on('resize', () =>
         {
@@ -112,6 +117,10 @@ export default class Experience
     setMicrohopne()
     {
         this.microphone = new Microphone()
+    }
+
+    setLLMCommunication() {
+        this.llmCommunication = new LLMCommunication();
     }
 
     setWorld()
